@@ -2,7 +2,7 @@
 
 A real-road-network pathfinding visualizer for Mysuru using OpenStreetMap data.
 
-## What changed from the prototype
+
 
 - Replaces the hand-written landmark graph with a drivable/walkable street network downloaded from OpenStreetMap through OSMnx.
 - Uses Leaflet to display real OSM map tiles and routes.
