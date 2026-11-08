@@ -13,17 +13,25 @@ app = FastAPI(
     version="1.0.0",
 )
 
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        
-        "https://mysore-osm-pathfinder-frontend.vercel.app"
+        # Deployed frontend
+        "https://mysore-osm-pathfinder-frontend.vercel.app",
+
+        # Local development
+        "http://localhost:5500",
+        "http://127.0.0.1:5500",
+
+        # Alternative local ports
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 
 @lru_cache(maxsize=3)
 def get_graph(mode: str):
