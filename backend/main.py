@@ -18,7 +18,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         # Deployed frontend
-        "https://mysore-osm-pathfinder-frontend.vercel.app",
+        "https://mysore-osm-pathfinder-frontend-twfn.vercel.app/",
 
         # Local development
         "http://localhost:5500",
