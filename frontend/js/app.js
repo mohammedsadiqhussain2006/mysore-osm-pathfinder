@@ -211,7 +211,7 @@ function renderResultCards(results) {
   note.className = "empty info-card";
   note.innerHTML = `
     <strong>How to read this comparison</strong>
-    <span>Both algorithms run over the exact same OSM road graph. Notice how A* evaluates significantly fewer nodes thanks to its distance heuristic while yielding the optimal path.</span>
+    <span>Both algorithms run over the exact same OSM road graph. Notice how A* evaluates significantly fewer nodes thanks to its distance heuristic while yielding the optimal path. <a href="visualizer.html" style="color: var(--teal); font-weight: 650; text-decoration: underline; margin-left: 6px;">Watch step-by-step search animation &rarr;</a></span>
   `;
   ui.results.appendChild(note);
 }

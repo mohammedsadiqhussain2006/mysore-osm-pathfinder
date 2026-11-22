@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="visualizer.css">
 </head>
 <body>
   <main class="shell">
@@ -16,7 +17,16 @@
         <h1>Mysuru Pathfinder</h1>
         <p class="subtitle">Explore real streets. Compare A* and Dijkstra.</p>
       </div>
-      <div class="status" id="status"><span class="dot"></span> Connecting to API…</div>
+      <div class="header-right">
+        <a href="visualizer.html" class="nav-visualizer-btn" title="Watch step-by-step animation of A* and Dijkstra">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+          Algorithm Animation
+          <span class="pill-badge">A* vs Dijkstra</span>
+        </a>
+        <div class="status" id="status"><span class="dot"></span> Connecting to API…</div>
+      </div>
     </header>
 
     <section class="toolbar">

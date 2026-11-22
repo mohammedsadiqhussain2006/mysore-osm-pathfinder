@@ -16,6 +16,7 @@ class RouteRequest(BaseModel):
     destination: Coordinate
     mode: TravelMode = "drive"
     algorithm: Algorithm = "compare"
+    include_exploration: bool = False
 
 
 class RouteMetrics(BaseModel):
@@ -32,6 +33,7 @@ class RouteResult(BaseModel):
     metrics: RouteMetrics
     coordinates: list[list[float]]  # [longitude, latitude] for GeoJSON/Leaflet
     node_ids: list[int]
+    explored_coords: list[list[float]] | None = None
 
 
 class RouteResponse(BaseModel):

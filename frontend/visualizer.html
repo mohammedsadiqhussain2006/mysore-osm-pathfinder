@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>A* vs Dijkstra Algorithm Animation &amp; Visualizer · Mysuru Pathfinder</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="visualizer.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="header">
+      <div>
+        <a href="index.html" class="back-link">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+          Back to Mysuru Map Pathfinder
+        </a>
+        <p class="eyebrow">ALGORITHM LAB · STEP-BY-STEP SEARCH ANIMATION</p>
+        <h1>A* &amp; Dijkstra Visualizer</h1>
+        <p class="subtitle">Experience how heuristic search dramatically prunes search space compared to uniform-cost search in real-time.</p>
+      </div>
+      <div class="header-right">
+        <div class="status" id="api-status"><span class="dot"></span> Connecting to API…</div>
+      </div>
+    </header>
+
+    <!-- Mode Selector Tabs -->
+    <nav class="mode-tabs">
+      <button id="tab-grid" class="tab-btn active" data-tab="grid">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7"></rect>
+          <rect x="14" y="3" width="7" height="7"></rect>
+          <rect x="14" y="14" width="7" height="7"></rect>
+          <rect x="3" y="14" width="7" height="7"></rect>
+        </svg>
+        Interactive Grid Arena (Side-by-Side)
+      </button>
+      <button id="tab-osm" class="tab-btn" data-tab="osm">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
+          <line x1="8" y1="2" x2="8" y2="18"></line>
+          <line x1="16" y1="6" x2="16" y2="22"></line>
+        </svg>
+        Mysuru Street Network Animation (Real OSM Graph)
+      </button>
+    </nav>
+
+    <!-- TAB 1: INTERACTIVE GRID ARENA -->
+    <section id="grid-view" class="tab-content active">
+      <!-- Toolbar Controls -->
+      <div class="vis-controls">
+        <button id="btn-play" class="vis-btn-primary" title="Run animation">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+          <span id="btn-play-text">Start Animation</span>
+        </button>
+
+        <button id="btn-step" class="vis-btn-secondary" title="Advance 1 step">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="5 4 15 12 5 20 5 4"></polygon>
+            <line x1="19" y1="5" x2="19" y2="19"></line>
+          </svg>
+          Step
+        </button>
+
+        <button id="btn-reset" class="vis-btn-secondary" title="Reset search state">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="1 4 1 10 7 10"></polyline>
+            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+          </svg>
+          Reset Search
+        </button>
+
+        <button id="btn-clear-walls" class="vis-btn-secondary" title="Clear all obstacles">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+          Clear Walls
+        </button>
+
+        <div class="vis-divider"></div>
+
+        <div class="vis-group">
+          <label for="speed-select">Speed</label>
+          <select id="speed-select">
+            <option value="slow">Slow (50ms)</option>
+            <option value="normal" selected>Normal (15ms)</option>
+            <option value="fast">Fast (4ms)</option>
+            <option value="turbo">Hyper / 60 FPS</option>
+            <option value="instant">Instant</option>
+          </select>
+        </div>
+
+        <div class="vis-group">
+          <label for="maze-select">Mazes &amp; Obstacles</label>
+          <select id="maze-select">
+            <option value="custom">Custom (Draw / Click)</option>
+            <option value="recursive">Recursive Division Maze</option>
+            <option value="random">Random Obstacles (30%)</option>
+            <option value="trap">U-Trap (Concave Dead-end)</option>
+            <option value="bottleneck">Center Wall &amp; Doorway</option>
+            <option value="spiral">Spiral Labyrinth</option>
+          </select>
+        </div>
+
+        <div class="vis-group">
+          <label for="heuristic-select">A* Heuristic</label>
+          <select id="heuristic-select">
+            <option value="euclidean" selected>Euclidean (Straight line)</option>
+            <option value="manhattan">Manhattan (Grid distance)</option>
+            <option value="chebyshev">Chebyshev (Max axis)</option>
+            <option value="diagonal">Octile / Diagonal</option>
+          </select>
+        </div>
+
+        <div class="vis-group">
+          <label for="diagonal-toggle">Movement</label>
+          <select id="diagonal-toggle">
+            <option value="4">4-Way (Orthogonal)</option>
+            <option value="8">8-Way (With Diagonals)</option>
+          </select>
+        </div>
+
+        <div class="vis-divider"></div>
+
+        <div class="tool-toggle">
+          <button id="tool-draw" class="active" title="Draw obstacle walls">✏️ Wall</button>
+          <button id="tool-erase" title="Erase obstacle walls">🧽 Erase</button>
+        </div>
+      </div>
+
+      <!-- Legend -->
+      <div class="vis-legend">
+        <span class="legend-item"><span class="legend-swatch start"></span> Start (A)</span>
+        <span class="legend-item"><span class="legend-swatch target"></span> Target (B)</span>
+        <span class="legend-item"><span class="legend-swatch wall"></span> Wall / Obstacle</span>
+        <span class="legend-item"><span class="legend-swatch frontier-dijkstra"></span> Dijkstra Frontier</span>
+        <span class="legend-item"><span class="legend-swatch visited-dijkstra"></span> Dijkstra Settled</span>
+        <span class="legend-item"><span class="legend-swatch frontier-astar"></span> A* Frontier</span>
+        <span class="legend-item"><span class="legend-swatch visited-astar"></span> A* Settled</span>
+        <span class="legend-item"><span class="legend-swatch path"></span> Shortest Path</span>
+        <span style="margin-left: auto; font-style: italic;">💡 Tip: Click &amp; drag on either board to draw walls or drag A and B.</span>
+      </div>
+
+      <!-- Synchronized Arena Boards -->
+      <div class="arena-grid">
+        <!-- Dijkstra Board -->
+        <article class="board-card dijkstra">
+          <div class="board-header">
+            <div class="board-title">
+              <h3>Dijkstra's Algorithm</h3>
+              <span class="board-badge dijkstra">Uniform-Cost Search</span>
+            </div>
+            <div class="board-formula">f(n) = g(n)</div>
+          </div>
+
+          <div class="canvas-container" id="container-dijkstra">
+            <canvas id="canvas-dijkstra"></canvas>
+          </div>
+
+          <div class="board-stats">
+            <div class="stat-box">
+              <small>Settled Nodes</small>
+              <strong id="stat-dijkstra-settled">0</strong>
+            </div>
+            <div class="stat-box">
+              <small>Frontier Size</small>
+              <strong id="stat-dijkstra-frontier">0</strong>
+            </div>
+            <div class="stat-box">
+              <small>Path Cost</small>
+              <strong id="stat-dijkstra-cost">—</strong>
+            </div>
+            <div class="stat-box">
+              <small>Status</small>
+              <span class="status-text ready" id="stat-dijkstra-status">Ready</span>
+            </div>
+          </div>
+        </article>
+
+        <!-- A* Board -->
+        <article class="board-card astar">
+          <div class="board-header">
+            <div class="board-title">
+              <h3>A* Search Algorithm</h3>
+              <span class="board-badge astar">Heuristic-Guided Search</span>
+            </div>
+            <div class="board-formula">f(n) = g(n) + h(n)</div>
+          </div>
+
+          <div class="canvas-container" id="container-astar">
+            <canvas id="canvas-astar"></canvas>
+          </div>
+
+          <div class="board-stats">
+            <div class="stat-box">
+              <small>Settled Nodes</small>
+              <strong id="stat-astar-settled">0</strong>
+            </div>
+            <div class="stat-box">
+              <small>Frontier Size</small>
+              <strong id="stat-astar-frontier">0</strong>
+            </div>
+            <div class="stat-box">
+              <small>Path Cost</small>
+              <strong id="stat-astar-cost">—</strong>
+            </div>
+            <div class="stat-box">
+              <small>Status</small>
+              <span class="status-text ready" id="stat-astar-status">Ready</span>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <!-- Real-Time Head to Head Comparison Banner -->
+      <section class="comparison-banner">
+        <h4>Live Performance Comparison</h4>
+        <div class="comparison-highlight">
+          <div class="comparison-message" id="comparison-message">
+            Hit <strong>Start Animation</strong> to see how A* prunes the search space relative to Dijkstra.
+          </div>
+          <div class="bar-comparison">
+            <div class="bar-labels">
+              <span>Dijkstra: <span id="bar-num-dijkstra">0</span> settled</span>
+              <span>A*: <span id="bar-num-astar">0</span> settled</span>
+            </div>
+            <div class="bar-track">
+              <div class="bar-fill-dijkstra" id="bar-fill-dijkstra" style="width: 50%;"></div>
+              <div class="bar-fill-astar" id="bar-fill-astar" style="width: 50%;"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Cell Inspector Tooltip -->
+      <div id="cell-inspector" class="cell-inspector">
+        <div class="row"><span class="key">Position:</span> <span class="val" id="insp-pos">(0, 0)</span></div>
+        <div class="row"><span class="key">State:</span> <span class="val" id="insp-state">—</span></div>
+        <div class="row"><span class="key">g(n) [cost from start]:</span> <span class="val" id="insp-g">—</span></div>
+        <div class="row"><span class="key">h(n) [est. to goal]:</span> <span class="val" id="insp-h">—</span></div>
+        <div class="row"><span class="key">f(n) [g + h priority]:</span> <span class="val" id="insp-f">—</span></div>
+      </div>
+    </section>
+
+    <!-- TAB 2: MYSURU STREET NETWORK ANIMATION -->
+    <section id="osm-view" class="tab-content">
+      <div class="toolbar">
+        <div class="vis-group" style="flex: 1; min-width: 260px;">
+          <label>Curated Mysuru Routes</label>
+          <div class="preset-pills">
+            <button class="preset-pill active" data-start="12.3051,76.6551" data-dest="12.2724,76.6713" data-name="Palace to Chamundi Hill">
+              👑 Palace → Chamundi Hill
+            </button>
+            <button class="preset-pill" data-start="12.3160,76.6437" data-dest="12.3023,76.6669" data-name="Station to Zoo">
+              🚂 Station → Mysore Zoo
+            </button>
+            <button class="preset-pill" data-start="12.3208,76.6575" data-dest="12.3073,76.6268" data-name="Cathedral to Kukkarahalli Lake">
+              ⛪ Cathedral → Kukkarahalli Lake
+            </button>
+            <button class="preset-pill" data-start="12.3592,76.5960" data-dest="12.3051,76.6551" data-name="Infosys to Palace">
+              🏢 Infosys → Palace
+            </button>
+          </div>
+        </div>
+
+        <label>Mode
+          <select id="osm-mode">
+            <option value="drive">Driving</option>
+            <option value="walk">Walking</option>
+            <option value="bike">Cycling</option>
+          </select>
+        </label>
+
+        <label>Algorithm
+          <select id="osm-algo">
+            <option value="compare" selected>Compare Both</option>
+            <option value="astar">A* only</option>
+            <option value="dijkstra">Dijkstra only</option>
+          </select>
+        </label>
+
+        <button id="btn-osm-run" class="vis-btn-primary">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+          <span id="btn-osm-run-text">Animate Street Search Wave</span>
+        </button>
+
+        <button id="btn-osm-replay" class="vis-btn-secondary" hidden>
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="1 4 1 10 7 10"></polyline>
+            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+          </svg>
+          Replay Wave
+        </button>
+      </div>
+
+      <div class="osm-map-wrap">
+        <div id="map-visualizer"></div>
+        <div class="osm-hud" id="osm-hud" hidden>
+          <div class="osm-hud-title">Live Search Wavefront</div>
+          <div class="osm-hud-stat dijkstra" id="osm-stat-dijkstra">
+            <span class="name">Dijkstra Explored:</span>
+            <span class="val" id="osm-count-dijkstra">0</span>
+          </div>
+          <div class="osm-hud-stat astar" id="osm-stat-astar">
+            <span class="name">A* Explored:</span>
+            <span class="val" id="osm-count-astar">0</span>
+          </div>
+          <div class="osm-hud-stat">
+            <span class="name">Shortest Distance:</span>
+            <span class="val" id="osm-dist">—</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- EDUCATIONAL SECTION -->
+    <section class="educational-section">
+      <article class="edu-card">
+        <h3>🧭 1. Uniform-Cost vs Heuristic Guidance</h3>
+        <p>
+          <strong>Dijkstra</strong> computes the lowest exact cost from start <span class="math">g(n)</span>. It has no knowledge of where the destination is, expanding outwards in expanding concentric circular waves like water rippling from a pebble.
+          <br><br>
+          <strong>A*</strong> adds a heuristic estimate <span class="math">h(n)</span> to evaluate <span class="math">f(n) = g(n) + h(n)</span>. This acts like a gravitational pull toward the destination, drastically reducing visited nodes.
+        </p>
+      </article>
+
+      <article class="edu-card">
+        <h3>⚖️ 2. Admissibility &amp; Optimality</h3>
+        <p>
+          A heuristic is <strong>admissible</strong> if it never overestimates the actual cost to reach the goal (<span class="math">h(n) ≤ h*(n)</span>).
+          <br><br>
+          Because straight-line (Euclidean) distance is the shortest possible path between two points in physical space, road distance can never be shorter than straight-line distance. This guarantees that A* always finds an optimal shortest path identical to Dijkstra!
+        </p>
+      </article>
+
+      <article class="edu-card">
+        <h3>⚡ 3. Real-World Applications</h3>
+        <p>
+          On the Mysuru road network, Dijkstra must explore hundreds or thousands of square city blocks in all directions before settling the destination.
+          <br><br>
+          A* prunes irrelevant side streets and dead ends, exploring <strong>70% to 90% fewer nodes</strong> while producing the exact same turn-by-turn route. This makes A* the foundational algorithm for GPS and game navigation.
+        </p>
+      </article>
+    </section>
+
+    <footer>
+      <span>© OpenStreetMap contributors · Mysuru Pathfinder Visualizer Lab</span>
+      <span>A* and Dijkstra run over identical graphs with consistent edge weights.</span>
+    </footer>
+  </main>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script type="module" src="js/visualizer.js"></script>
+</body>
+</html>

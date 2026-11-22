@@ -24,8 +24,8 @@ def edge_travel_time(u, v, data):
     return min(float(attrs.get("travel_time", 1e12)) for attrs in data.values())
 
 
-def search_with_metrics(graph, source, target, algorithm: str):
-    """Custom Dijkstra/A* to count settled nodes consistently."""
+def search_with_metrics(graph, source, target, algorithm: str, include_exploration: bool = False):
+    """Custom Dijkstra/A* to count settled nodes consistently and optionally record exploration order."""
     import heapq
     import itertools
 
@@ -35,6 +35,7 @@ def search_with_metrics(graph, source, target, algorithm: str):
     queue = [(0.0, next(counter), source)]
     settled = set()
     explored = 0
+    explored_coords = [] if include_exploration else None
 
     def h(node):
         if algorithm != "astar":
@@ -49,6 +50,10 @@ def search_with_metrics(graph, source, target, algorithm: str):
             continue
         settled.add(current)
         explored += 1
+
+        if include_exploration:
+            node_data = graph.nodes[current]
+            explored_coords.append([round(float(node_data["x"]), 5), round(float(node_data["y"]), 5)])
 
         if current == target:
             break
@@ -71,10 +76,21 @@ def search_with_metrics(graph, source, target, algorithm: str):
     while path[-1] != source:
         path.append(parents[path[-1]])
     path.reverse()
-    return path, distances[target], explored, elapsed_ms
+
+    final_explored_coords = None
+    if include_exploration and explored_coords:
+        # Cap to max ~6000 points evenly spaced across the search timeline for responsive UI rendering
+        max_points = 6000
+        if len(explored_coords) > max_points:
+            step = math.ceil(len(explored_coords) / max_points)
+            final_explored_coords = explored_coords[::step]
+        else:
+            final_explored_coords = explored_coords
+
+    return path, distances[target], explored, elapsed_ms, final_explored_coords
 
 
-def build_route_result(graph, path, distance_m, explored, elapsed_ms, algorithm, start_node, end_node):
+def build_route_result(graph, path, distance_m, explored, elapsed_ms, algorithm, start_node, end_node, explored_coords=None):
     coordinates = []
     for node in path:
         data = graph.nodes[node]
@@ -96,7 +112,12 @@ def build_route_result(graph, path, distance_m, explored, elapsed_ms, algorithm,
         snapped_start=Coordinate(lat=float(start_data["y"]), lon=float(start_data["x"])),
         snapped_destination=Coordinate(lat=float(end_data["y"]), lon=float(end_data["x"])),
     )
-    return RouteResult(metrics=metrics, coordinates=coordinates, node_ids=[int(n) for n in path])
+    return RouteResult(
+        metrics=metrics,
+        coordinates=coordinates,
+        node_ids=[int(n) for n in path],
+        explored_coords=explored_coords,
+    )
 
 
 def calculate_routes(graph, request):
@@ -108,11 +129,24 @@ def calculate_routes(graph, request):
 
     algorithms = ["astar", "dijkstra"] if request.algorithm == "compare" else [request.algorithm]
     results = []
+    include_exploration = getattr(request, "include_exploration", False)
 
     for algorithm in algorithms:
-        path, distance_m, explored, elapsed_ms = search_with_metrics(graph, start, end, algorithm)
+        path, distance_m, explored, elapsed_ms, explored_coords = search_with_metrics(
+            graph, start, end, algorithm, include_exploration=include_exploration
+        )
         results.append(
-            build_route_result(graph, path, distance_m, explored, elapsed_ms, algorithm, start, end)
+            build_route_result(
+                graph,
+                path,
+                distance_m,
+                explored,
+                elapsed_ms,
+                algorithm,
+                start,
+                end,
+                explored_coords=explored_coords,
+            )
         )
 
     return results

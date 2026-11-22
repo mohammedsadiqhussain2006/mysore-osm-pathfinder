@@ -79,6 +79,12 @@ The API runs at http://127.0.0.1:8000. If you host the frontend elsewhere, updat
 4. Choose a travel mode and calculate.
 5. The map draws the selected route and the comparison panel reports metrics.
 
+### Algorithm Animation & Visualizer Lab
+
+Click the **Algorithm Animation (A* vs Dijkstra)** button in the header (or open `http://localhost:5500/visualizer.html`) to explore the step-by-step search comparison:
+- **Interactive Grid Arena**: Run A* and Dijkstra side-by-side with synchronized mazes (recursive division, random obstacles, U-traps, bottlenecks), interactive wall drawing, speed control, heuristic selector, and cell cost inspector ($g, h, f$).
+- **Mysuru Street Network Animation**: Watch the real-time exploration wave bloom across the physical street network of Mysuru on OpenStreetMap.
+
 ## Notes on algorithm fairness
 
 Both algorithms use the same downloaded OSM graph, the same edge weights, and the same
