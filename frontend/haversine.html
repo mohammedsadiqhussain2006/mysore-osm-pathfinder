@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Haversine Formula</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            line-height: 1.6;
+            color: #333;
+        }
+        h1 { margin-bottom: 0.5rem; color: #1a1a2e; }
+        h2 { margin: 1.5rem 0 0.5rem; color: #16213e; }
+        p { margin-bottom: 0.75rem; }
+        .formula {
+            background: #f0f4f8;
+            border-left: 4px solid #0f3460;
+            padding: 1rem 1.25rem;
+            margin: 1rem 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95rem;
+            overflow-x: auto;
+        }
+        .calculator {
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        .field label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            font-size: 0.9rem;
+        }
+        .field input {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        .field input:focus {
+            outline: none;
+            border-color: #0f3460;
+            box-shadow: 0 0 0 2px rgba(15,52,96,0.15);
+        }
+        button {
+            background: #0f3460;
+            color: #fff;
+            border: none;
+            padding: 0.6rem 1.5rem;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-top: 0.5rem;
+        }
+        button:hover { background: #1a1a2e; }
+        .result {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: #e8f5e9;
+            border-radius: 4px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            display: none;
+        }
+        .result.show { display: block; }
+        .note {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 0.5rem;
+        }
+        code {
+            background: #f0f0f0;
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Haversine Formula</h1>
+<p>Computes the <strong>great-circle distance</strong> between two points on a sphere given their latitude and longitude.</p>
+
+<h2>Formula</h2>
+<div class="formula">
+a = sin²(Δφ/2) + cos(φ₁) · cos(φ₂) · sin²(Δλ/2)<br>
+c = 2 · atan2(√a, √(1−a))<br>
+d = R · c
+</div>
+<p>Where <code>φ</code> = latitude, <code>λ</code> = longitude, <code>R</code> = Earth's radius (6,371 km).</p>
+
+<h2>Calculator</h2>
+<div class="calculator">
+    <div class="row">
+        <div class="field">
+            <label for="lat1">Point 1 – Latitude</label>
+            <input type="number" id="lat1" step="any" placeholder="e.g. 19.0760" value="19.0760">
+        </div>
+        <div class="field">
+            <label for="lon1">Point 1 – Longitude</label>
+            <input type="number" id="lon1" step="any" placeholder="e.g. 72.8777" value="72.8777">
+        </div>
+    </div>
+    <div class="row">
+        <div class="field">
+            <label for="lat2">Point 2 – Latitude</label>
+            <input type="number" id="lat2" step="any" placeholder="e.g. 28.6139" value="28.6139">
+        </div>
+        <div class="field">
+            <label for="lon2">Point 2 – Longitude</label>
+            <input type="number" id="lon2" step="any" placeholder="e.g. 77.2090" value="77.2090">
+        </div>
+    </div>
+    <button onclick="calc()">Calculate Distance</button>
+    <div class="result" id="result"></div>
+    <p class="note">Defaults: Mumbai → New Delhi. Enter values in decimal degrees (negative = South / West).</p>
+</div>
+
+<h2>Notes</h2>
+<ul style="padding-left: 1.25rem; margin-bottom: 1rem;">
+    <li>Assumes a <strong>spherical</strong> Earth (radius 6,371 km). For higher accuracy use the <strong>Vincenty</strong> or <strong>Karney</strong> formulas on an ellipsoid.</li>
+    <li>Maximum error ≈ <strong>0.3%</strong> compared to geodesic distance on the WGS-84 ellipsoid.</li>
+    <li>Preferred over the spherical law of cosines for <strong>small distances</strong> due to better numerical stability.</li>
+</ul>
+
+<script>
+function haversine(lat1, lon1, lat2, lon2) {
+    const R = 6371; // km
+    const toRad = d => d * Math.PI / 180;
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a = Math.sin(dLat/2)**2 +
+              Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon/2)**2;
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+}
+
+function calc() {
+    const lat1 = parseFloat(document.getElementById('lat1').value);
+    const lon1 = parseFloat(document.getElementById('lon1').value);
+    const lat2 = parseFloat(document.getElementById('lat2').value);
+    const lon2 = parseFloat(document.getElementById('lon2').value);
+    const el = document.getElementById('result');
+    if ([lat1, lon1, lat2, lon2].some(isNaN)) {
+        el.textContent = '⚠ Please fill in all four fields with valid numbers.';
+        el.classList.add('show');
+        return;
+    }
+    const d = haversine(lat1, lon1, lat2, lon2);
+    el.textContent = `Distance: ${d.toFixed(2)} km`;
+    el.classList.add('show');
+}
+</script>
+
+</body>
+</html>   
+
+
